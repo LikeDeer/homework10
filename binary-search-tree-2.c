@@ -48,9 +48,9 @@ int deleteNode(Node* head, int key);  /* delete the node for the key */
 int freeBST(Node* head); /* free all memories allocated to the tree */
 
 /* you may add your own defined functions if necessary */
+int IsInitialized(Node* head);
 
-
-void printStack();
+// void printStack();
 
 
 
@@ -59,6 +59,14 @@ int main()
 	char command;
 	int key;
 	Node* head = NULL;
+
+	/* node 수가 20이 넘지 않도록 조정하겠습니다. */
+	 /*	68행, 93~102행을 수정하였습니다.*/
+	int countNode = 0;
+
+	/* 큐를 circular 로 조정하겠습니다. */
+	 /* 전역변수 rear, front 를 -1이 아닌 0으로 초기화하고 문제를 풀겠습니다 */
+	rear = front = 0;
 
 	do{
 		printf("\n\n");
@@ -82,9 +90,16 @@ int main()
 			freeBST(head);
 			break;
 		case 'i': case 'I':
-			printf("Your Key = ");
-			scanf("%d", &key);
-			insert(head, key);
+			if (countNode + 1 > 20) {
+				printf("The tree is full.. Unable to insert yet. :(\n");
+				continue;
+			}
+			else {
+				printf("Your Key = ");
+				scanf("%d", &key);
+				insert(head, key);
+				countNode++;
+			}
 			break;
 		case 'd': case 'D':
 			printf("Your Key = ");
@@ -104,7 +119,7 @@ int main()
 			break;
 
 		case 'p': case 'P':
-			printStack();
+			// printStack();
 			break;
 
 		default:
@@ -150,15 +165,42 @@ void recursiveInorder(Node* ptr)
 /**
  * textbook: p 224
  */
+/* 반복적 중위 순회는 stack 이 필요하다. */
 void iterativeInorder(Node* node)
 {
+	Node* stack[MAX_STACK_SIZE];
+	while (1) {
+		for (; node; node = node->left)
+			push(node);				// 스택에 삽입
+		node = pop();				// 스택에서 삭제
+
+		if (!node) break;			// 공백 스택
+
+		printf("%d", node->key);
+		node = node->right;
+	}
 }
 
 /**
  * textbook: p 225
  */
-void levelOrder(Node* ptr)
+/* Level-order Traversal은 큐를 사용한다 */
+void levelOrder(Node* ptr)			// LRV
 {
+	if (!ptr) return;
+	enQueue(ptr);
+
+	while (1) {
+		ptr = deQueue();
+		if (ptr) {
+			printf("%d ", ptr->key);
+			if (ptr->left)
+				enQueue(ptr->left);
+			if (ptr->right)
+				enQueue(ptr->right);
+		}
+		else break;
+	}
 }
 
 
@@ -208,6 +250,58 @@ int insert(Node* head, int key)
 
 int deleteNode(Node* head, int key)
 {
+	/* 전처리 */
+	if (IsInitialized(head)) {
+		printf("Please initialize first and try again.\n");
+		return 1;
+	}
+
+	
+	if (head->left == NULL) {
+		printf("Nothing to delete.\n");
+		return 1;
+	}
+
+
+	Node* ptr = head->left;
+	Node* prev = head;				// prev는 삭제하기 전 부모 노드
+
+	while(ptr) {
+
+		if(ptr->key == key) {		// key를 가진 노드를 찾았는데,
+			if(ptr->left == NULL && ptr->right == NULL) {		// leaf 노드 이면, 삭제
+				
+				if(prev == head)		// 첫 노드가 leaf 였다면, 삭제 후 공백 트리
+					head->left = NULL;
+
+				// 부모 노드 링크 NULL로 초기화
+				if(prev->left == ptr)
+					prev->left = NULL;
+				else
+					prev->right = NULL;
+
+				free(ptr);
+
+				return 0;
+			}
+			else {					// leaf 노드가 아니면 아무것도 안하기
+				printf("Found the node but it was not a leaf");
+			}
+			return 0;
+		}
+
+		// key를 가진 노드를 발견하지 못하면 다음 노드를 확인하기
+		prev = ptr;				// prev는 ptr을 따라가기
+
+		if(ptr->key < key)
+			ptr = ptr->right;
+		else
+			ptr = ptr->left;
+	}
+
+	printf("There's no key node.\n");
+
+	return 1;
 }
 
 
@@ -219,6 +313,7 @@ void freeNode(Node* ptr)
 		free(ptr);
 	}
 }
+
 
 int freeBST(Node* head)
 {
@@ -241,23 +336,41 @@ int freeBST(Node* head)
 
 Node* pop()
 {
+	 if(top == -1)
+        return NULL;
+    else
+        return stack[top--];
 }
 
 void push(Node* aNode)
 {
+	stack[++top] = aNode;			// 우리 스택은 '포인터 배열'
 }
 
 
 
 Node* deQueue()
 {
+	front = (front + 1) % MAX_QUEUE_SIZE;
+	return queue[front];
 }
 
 void enQueue(Node* aNode)
 {
+	rear = (rear + 1) % MAX_QUEUE_SIZE;
+	queue[rear] = aNode;
 }
 
+// void printStack()
+// {
+
+// }
 
 
 
-
+/* ------------- 개인 정의 함수 ------------- */
+int IsInitialized(Node* head) {
+	if (head)
+		return 1;
+	else return 0;
+}
