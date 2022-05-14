@@ -48,9 +48,7 @@ int deleteNode(Node* head, int key);  /* delete the node for the key */
 int freeBST(Node* head); /* free all memories allocated to the tree */
 
 /* you may add your own defined functions if necessary */
-int IsInitialized(Node* head);
 
-int deleteParentof2(Node*, Node*);
 
 // void printStack();
 
@@ -81,15 +79,14 @@ int main()
 		switch(command) {
 		case 'z': case 'Z':
 			initializeBST(&head);
+			countNode = 0;
 			break;
 		case 'q': case 'Q':
 			freeBST(head);
 			break;
 		case 'i': case 'I':
-			if (countNode + 1 > 20) {
+			if (countNode + 1 > 20)
 				printf("The tree is full.. Unable to insert yet. :(\n");
-				continue;
-			}
 			else {
 				printf("Your Key = ");
 				scanf("%d", &key);
@@ -100,7 +97,8 @@ int main()
 		case 'd': case 'D':
 			printf("Your Key = ");
 			scanf("%d", &key);
-			deleteNode(head, key);
+			if (!(deleteNode(head, key)))
+				countNode--;
 			break;
 
 		case 'r': case 'R':
@@ -282,12 +280,12 @@ int deleteNode(Node* head, int key)
 						searchHeir = searchHeir->right;
 					}
 
-					printf("substitute : %d\n", searchHeir->key);
+					printf("substitute : [%d]\n", searchHeir->key);		// 대체되는 key 출력
 					ptr->key = searchHeir->key;
 
 					/* 대체한 원소의 노드 삭제 */
-					// ** 대체된 노드는 leaf 이거나 하나의 자식을 가진 non-leaf 노드
-					deleteNode(ptr->left, searchHeir->key);
+					// ** 대체된 노드는 leaf 이거나 하나의 자식을 가진 non-leaf 노드 (case 1 or case 3)
+					deleteNode(ptr, searchHeir->key);
 				}
 				
 				/* case 3: 하나의 자식을 가진 non-leaft 노드 이면, */
@@ -330,6 +328,8 @@ int deleteNode(Node* head, int key)
 		else
 			ptr = ptr->left;
 	}
+	
+	
 
 	printf("There's no key node.\n");
 
