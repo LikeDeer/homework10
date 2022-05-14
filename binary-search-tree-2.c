@@ -60,8 +60,6 @@ int main()
 	int key;
 	Node* head = NULL;
 
-	int countNode = 0;
-
 	do{
 		printf("\n\n");
 		printf("----------------------------------------------------------------\n");
@@ -79,26 +77,19 @@ int main()
 		switch(command) {
 		case 'z': case 'Z':
 			initializeBST(&head);
-			countNode = 0;
 			break;
 		case 'q': case 'Q':
 			freeBST(head);
 			break;
 		case 'i': case 'I':
-			if (countNode + 1 > 20)
-				printf("The tree is full.. Unable to insert yet. :(\n");
-			else {
-				printf("Your Key = ");
-				scanf("%d", &key);
-				insert(head, key);
-				countNode++;
-			}
+			printf("Your Key = ");
+			scanf("%d", &key);
+			insert(head, key);
 			break;
 		case 'd': case 'D':
 			printf("Your Key = ");
 			scanf("%d", &key);
-			if (!(deleteNode(head, key)))
-				countNode--;
+			deleteNode(head, key);
 			break;
 
 		case 'r': case 'R':
@@ -159,19 +150,19 @@ void recursiveInorder(Node* ptr)
 /**
  * textbook: p 224
  */
-/* 반복적 중위 순회는 stack 이 필요하다. */
-void iterativeInorder(Node* node)
+/* Iterative-Inorder Traversal는 stack 이 필요하다. */
+void iterativeInorder(Node* node)			// LVR
 {
 	Node* stack[MAX_STACK_SIZE];
 	while (1) {
-		for (; node; node = node->left)
-			push(node);				// 스택에 삽입
-		node = pop();				// 스택에서 삭제
+		for (; node; node = node->left)		// L
+			push(node);						// 첫 노드부터 왼쪽으로 가며 스택에 쌓아 넣는다.
+		node = pop();						// 끝까지 도착하면 하나 꺼내고, 다음은 V
 
 		if (!node) break;			// 공백 스택
 
-		printf(" [%d] ", node->key);
-		node = node->right;
+		printf(" [%d] ", node->key);		// V
+		node = node->right;					// R. 오른쪽으로 한칸 가서 다시 LVR. 반복
 	}
 }
 
@@ -179,21 +170,21 @@ void iterativeInorder(Node* node)
  * textbook: p 225
  */
 /* Level-order Traversal은 큐를 사용한다 */
-void levelOrder(Node* ptr)			// LRV
+void levelOrder(Node* ptr)					// 그래프의 BFS와 유사
 {
 	if (!ptr) return;
-	enQueue(ptr);
 
-	while (1) {
+	enQueue(ptr);							// 첫 노드 큐에 넣고 시작
+	while (1) {					// 한 루프 마다 노드 하나씩 방문. VLR
 		ptr = deQueue();
 		if (ptr) {
-			printf(" [%d] ", ptr->key);
-			if (ptr->left)
-				enQueue(ptr->left);
-			if (ptr->right)
-				enQueue(ptr->right);
+			printf(" [%d] ", ptr->key);		// V. 큐에서 하나 꺼내고 출력
+			if (ptr->left)					// L
+				enQueue(ptr->left);			//
+			if (ptr->right)					// R
+				enQueue(ptr->right);		// 자식 노드들을 큐에 넣고 반복
 		}
-		else {
+		else {					// 큐가 비면 순회 종료
 			rear = front = -1;
 			break;
 		}
@@ -289,27 +280,27 @@ int deleteNode(Node* head, int key)
 				}
 				
 				/* case 3: 하나의 자식을 가진 non-leaft 노드 이면, */
-				else
+				else		/* 링크 재구성을 위해 몇 가지 케이스를 나눠 생각 */
 				{
-					if (ptr->left) {
-						if (prev->left == ptr) {
+					if (ptr->left) {	// 그것(ptr)이 left 자식을 가진 노드라면
+						if (prev->left == ptr) {	// 그것이 left 자식이었다면
 							ptr = ptr->left;
 							free(prev->left);
 							prev->left = ptr;
 						}
-						else {
+						else {						// 그것이 right 자식이었다면
 							ptr = ptr->left;
 							free(prev->right);
 							prev->right = ptr;
 						}
 					}
-					else {
-						if (prev->left == ptr) {
+					else {				// 그것이 right 자식을 가진 노드라면
+						if (prev->left == ptr) {	// 그것이 left 자식이었다면
 							ptr = ptr->right;
 							free(prev->left);
 							prev->left = ptr;
 						}
-						else {
+						else {						// 그것이 right 자식이었다면
 							ptr = ptr->right;
 							free(prev->right);
 							prev->right = ptr;
@@ -369,28 +360,27 @@ int freeBST(Node* head)
 Node* pop()
 {
 	 if(top == -1)
-        return NULL;
+        return NULL;			// 공백 스택
     else
-        return stack[top--];
+        return stack[top--];		// pop
 }
 
 void push(Node* aNode)
 {
-	stack[++top] = aNode;			// 우리 스택은 '포인터 배열'
+	stack[++top] = aNode;			// push. *우리 스택은 '포인터 배열'
 }
 
 
-
+/* circular-queue 를 이용 */
 Node* deQueue()
 {
-	
-	front = (front + 1) % MAX_QUEUE_SIZE;
+	front = (front + 1) % MAX_QUEUE_SIZE;		// front(rear)의 범위 : 0 ~ 19
 	return queue[front];
 }
 
 void enQueue(Node* aNode)
 {
-	rear = (rear + 1) % MAX_QUEUE_SIZE;
+	rear = (rear + 1) % MAX_QUEUE_SIZE;			// front(rear)의 범위 : 0 ~ 19
 	queue[rear] = aNode;
 }
 
@@ -399,6 +389,3 @@ void enQueue(Node* aNode)
 
 // }
 
-
-
-/* ------------- 개인 정의 함수 ------------- */
