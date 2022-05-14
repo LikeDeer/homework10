@@ -50,6 +50,8 @@ int freeBST(Node* head); /* free all memories allocated to the tree */
 /* you may add your own defined functions if necessary */
 int IsInitialized(Node* head);
 
+int deleteParentof2(Node*, Node*);
+
 // void printStack();
 
 
@@ -60,13 +62,7 @@ int main()
 	int key;
 	Node* head = NULL;
 
-	/* node 수가 20이 넘지 않도록 조정하겠습니다. */
-	 /*	68행, 93~102행을 수정하였습니다.*/
 	int countNode = 0;
-
-	/* 큐를 circular 로 조정하겠습니다. */
-	 /* 전역변수 rear, front 를 -1이 아닌 0으로 초기화하고 문제를 풀겠습니다 */
-	rear = front = 0;
 
 	do{
 		printf("\n\n");
@@ -176,7 +172,7 @@ void iterativeInorder(Node* node)
 
 		if (!node) break;			// 공백 스택
 
-		printf("%d", node->key);
+		printf(" [%d] ", node->key);
 		node = node->right;
 	}
 }
@@ -193,13 +189,16 @@ void levelOrder(Node* ptr)			// LRV
 	while (1) {
 		ptr = deQueue();
 		if (ptr) {
-			printf("%d ", ptr->key);
+			printf(" [%d] ", ptr->key);
 			if (ptr->left)
 				enQueue(ptr->left);
 			if (ptr->right)
 				enQueue(ptr->right);
 		}
-		else break;
+		else {
+			rear = front = -1;
+			break;
+		}
 	}
 }
 
@@ -250,26 +249,13 @@ int insert(Node* head, int key)
 
 int deleteNode(Node* head, int key)
 {
-	/* 전처리 */
-	if (IsInitialized(head)) {
-		printf("Please initialize first and try again.\n");
-		return 1;
-	}
-
-	
-	if (head->left == NULL) {
-		printf("Nothing to delete.\n");
-		return 1;
-	}
-
-
 	Node* ptr = head->left;
 	Node* prev = head;				// prev는 삭제하기 전 부모 노드
 
 	while(ptr) {
-
 		if(ptr->key == key) {		// key를 가진 노드를 찾았는데,
-			if(ptr->left == NULL && ptr->right == NULL) {		// leaf 노드 이면, 삭제
+
+			if(ptr->left == NULL && ptr->right == NULL) {	// case 1: leaf 노드 이면,
 				
 				if(prev == head)		// 첫 노드가 leaf 였다면, 삭제 후 공백 트리
 					head->left = NULL;
@@ -284,8 +270,54 @@ int deleteNode(Node* head, int key)
 
 				return 0;
 			}
-			else {					// leaf 노드가 아니면 아무것도 안하기
-				printf("Found the node but it was not a leaf");
+
+			else {					// leaf 노드가 아니면,
+				/* case 2: 두 개의 자식을 가진 non-leaf 노드 */
+				if ((ptr->left != NULL) && (ptr->right != NULL))
+				{
+					/* 왼쪽 서브트리에서 가장 큰 원소로 대체 */
+					Node* searchHeir = ptr->left;
+
+					while (searchHeir->right != NULL) {
+						searchHeir = searchHeir->right;
+					}
+
+					printf("substitute : %d\n", searchHeir->key);
+					ptr->key = searchHeir->key;
+
+					/* 대체한 원소의 노드 삭제 */
+					// ** 대체된 노드는 leaf 이거나 하나의 자식을 가진 non-leaf 노드
+					deleteNode(ptr->left, searchHeir->key);
+				}
+				
+				/* case 3: 하나의 자식을 가진 non-leaft 노드 이면, */
+				else
+				{
+					if (ptr->left) {
+						if (prev->left == ptr) {
+							ptr = ptr->left;
+							free(prev->left);
+							prev->left = ptr;
+						}
+						else {
+							ptr = ptr->left;
+							free(prev->right);
+							prev->right = ptr;
+						}
+					}
+					else {
+						if (prev->left == ptr) {
+							ptr = ptr->right;
+							free(prev->left);
+							prev->left = ptr;
+						}
+						else {
+							ptr = ptr->right;
+							free(prev->right);
+							prev->right = ptr;
+						}
+					}
+				}
 			}
 			return 0;
 		}
@@ -351,6 +383,7 @@ void push(Node* aNode)
 
 Node* deQueue()
 {
+	
 	front = (front + 1) % MAX_QUEUE_SIZE;
 	return queue[front];
 }
@@ -369,8 +402,3 @@ void enQueue(Node* aNode)
 
 
 /* ------------- 개인 정의 함수 ------------- */
-int IsInitialized(Node* head) {
-	if (head)
-		return 1;
-	else return 0;
-}
